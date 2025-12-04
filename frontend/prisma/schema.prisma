@@ -1,0 +1,196 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [postgis, uuid_ossp(map: "uuid-ossp", schema: "extensions"), vector]
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  DUPLEX
+  STUDIO
+  PENTHOUSE
+  LAND
+  COMMERCIAL
+  OFFICE
+  FARM
+}
+
+enum ListingType {
+  RENT
+  SALE
+}
+
+enum PropertyStatus {
+  ACTIVE
+  SOLD
+  RENTED
+  INACTIVE
+}
+
+enum DataSource {
+  TUNISIE_ANNONCE
+  USER_UPLOAD
+  TAYARA
+  MUBAWAB
+}
+
+model Property {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  scrapedAt   DateTime @default(now())
+  analyzedAt  DateTime?
+
+  // Core Info
+  title       String
+  description String?  @db.Text
+  listingType ListingType
+
+  // Pricing
+  price              Float
+  currency           String  @default("TND")
+  pricePerSqm        Float?
+  estimatedFairValue Float?
+  isPriceNegotiable  Boolean @default(false)
+
+  // Location
+  address   String?
+  city      String?
+  region    String?
+  latitude  Float?
+  longitude Float?
+  location  Unsupported("geometry(Point, 4326)")?
+
+  // Property Details
+  propertyType PropertyType?
+  surfaceArea  Float?
+  rooms        Int?
+  bathrooms    Int?
+  floor        Int?
+  totalFloors  Int?
+
+  // Features & Amenities
+  features     String[] // ["parking", "elevator", "garden", "pool", "balcony", "furnished"]
+
+  // Source Tracking
+  source       DataSource
+  sourceUrl    String     @unique
+  sourceId     String?
+  status       PropertyStatus @default(ACTIVE)
+
+  // AI Intelligence Layer
+  renovationScore      Float?  // 0-10 scale
+  dealRating           Float?  // 0-100 (percentage - how good the deal is)
+  aiTags               String[] // ["marble_floors", "modern_kitchen", "needs_renovation"]
+  aiDescription        String?  @db.Text // AI-generated enhanced description
+  descriptionEmbedding Unsupported("vector(768)")?
+
+  // Analytics
+  views          Int      @default(0)
+  isFeatured     Boolean  @default(false)
+
+  // Contact (for user uploads)
+  contactPhone   String?
+  contactEmail   String?
+  contactName    String?
+
+  // Relations
+  images         Image[]
+  priceHistory   PriceHistory[]
+  aiAnalyses     AIAnalysis[]
+
+  // Indexes for Performance
+  @@index([price])
+  @@index([listingType])
+  @@index([propertyType])
+  @@index([status])
+  @@index([source])
+  @@index([city, region])
+  @@index([rooms, bathrooms])
+  @@index([dealRating])
+  @@index([createdAt])
+  @@index([latitude, longitude])
+  @@map("properties")
+}
+
+model Image {
+  id               String   @id @default(dbgenerated("gen_random_uuid()"))
+  url              String
+  localPath        String?  // For downloaded images
+  caption          String?
+  order            Int      @default(0)
+  width            Int?
+  height           Int?
+
+  // AI Analysis
+  analyzedAt       DateTime?
+  aiTags           String[] // ["modern", "spacious", "bright"]
+  renovationScore  Float?   // Per-image renovation assessment
+
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("images")
+}
+
+model PriceHistory {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  price      Float
+  recordedAt DateTime @default(now())
+  source     String?  // Where this price was recorded
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, recordedAt])
+  @@map("price_history")
+}
+
+model AIAnalysis {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  createdAt     DateTime @default(now())
+
+  // Analysis Details
+  modelUsed     String   // "ollama-llama3.2-vision" or "gemini-1.5-flash"
+  analysisType  String   // "renovation_score", "price_prediction", "description_generation"
+  result        Json     // Flexible JSON to store any analysis results
+  confidence    Float?   // 0-1 confidence score
+
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([analysisType])
+  @@map("ai_analyses")
+}
+
+model NeighborhoodStats {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  updatedAt       DateTime @updatedAt
+
+  // Location
+  city            String
+  region          String?
+
+  // Market Statistics
+  avgPricePerSqm  Float
+  medianPrice     Float
+  totalListings   Int
+  activeListings  Int
+
+  // Breakdown by type
+  avgRentPrice    Float?
+  avgSalePrice    Float?
+
+  @@unique([city, region])
+  @@map("neighborhood_stats")
+}
