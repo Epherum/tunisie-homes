@@ -1,29 +1,33 @@
-import type { Metadata } from 'next'
-import { Inter, Outfit } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/Navbar'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { ClientLayout } from "./client-layout";
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-display' })
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'TunisHome Pro',
-  description: 'Premium Real Estate Intelligence for Tunisia',
-}
+  title: "TunisHome Pro",
+  description: "Live Supabase-backed listings for Tunisian real estate.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
-      <body className="bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased selection:bg-[var(--accent-gold)] selection:text-black">
-        <Navbar />
-        <main className="pt-20 min-h-screen">
-          {children}
-        </main>
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
-  )
+  );
 }

@@ -27,6 +27,7 @@ def main():
     parser = argparse.ArgumentParser(description="TunisHome Data Factory")
     parser.add_argument("--max-listings", type=int, default=5, help="Maximum number of listings to scrape")
     parser.add_argument("--download-images", action="store_true", help="Download images locally")
+    parser.add_argument("--upload-images", action="store_true", help="Upload images to Supabase Storage")
     parser.add_argument("--generate-embeddings", action="store_true", help="Generate embeddings for properties")
     parser.add_argument("--embedding-provider", choices=["gemini", "openai"], default="gemini", help="Embedding provider")
     parser.add_argument("--skip-geocoding", action="store_true", help="Skip geocoding step (faster for testing)")
@@ -60,6 +61,11 @@ def main():
     if args.download_images:
         image_downloader = ImageDownloader(output_dir="downloaded_images")
         print("Image downloader enabled")
+    elif args.upload_images:
+        print("Image downloader disabled (uploading directly from source URLs)")
+
+    if args.upload_images and not os.environ.get("STORAGE_BUCKET"):
+        print("Warning: STORAGE_BUCKET is not set; Storage uploads will be skipped")
 
     # Optional: Embedding generator
     embedding_generator = None
@@ -92,6 +98,8 @@ def main():
             print(f"\n[{i}/{len(properties)}] Processing property...")
 
         try:
+            image_urls = property_data.get('images', [])
+
             # Normalize and clean data
             property_data = normalizer.normalize(property_data)
 
@@ -115,18 +123,6 @@ def main():
                 else:
                     print(f"  Could not geocode location")
 
-            # Download images if enabled
-            if image_downloader and property_data.get('images'):
-                print(f"  Downloading {len(property_data['images'])} images...")
-                # Use sourceUrl hash as property ID for now
-                property_id = str(hash(property_data['sourceUrl']))
-                local_paths = image_downloader.download_images(
-                    property_data['images'],
-                    property_id
-                )
-                # Keep original URLs in images array (local paths could be stored separately if needed)
-                print(f"  Downloaded {len(local_paths)} images")
-
             # Generate embedding if enabled
             if embedding_generator:
                 print(f"  Generating embedding...")
@@ -139,9 +135,33 @@ def main():
 
             # Push to database
             print(f"  Saving to database...")
-            property_id = db.upsert_property(property_data)
+            should_upload_images = bool(args.upload_images and image_urls)
+
+            # When uploading, skip syncing images on the initial upsert so we can replace them with Storage URLs
+            property_id = db.upsert_property(
+                property_data,
+                sync_images=not should_upload_images,
+                image_urls=None if should_upload_images else image_urls
+            )
 
             if property_id:
+                if image_downloader and image_urls:
+                    print(f"  Downloading {len(image_urls)} images...")
+                    local_paths = image_downloader.download_images(
+                        image_urls,
+                        str(property_id)
+                    )
+                    print(f"  Downloaded {len(local_paths)} images")
+
+                if should_upload_images:
+                    print(f"  Uploading images to storage ({len(image_urls)})...")
+                    uploaded_urls = db.upload_images_to_storage(property_id, image_urls)
+                    if uploaded_urls:
+                        db.sync_images(property_id, uploaded_urls)
+                        print(f"  Synced {len(uploaded_urls)} images to database")
+                    else:
+                        print("  No images uploaded; skipping image sync")
+
                 processed_count += 1
 
             # Be polite to the database

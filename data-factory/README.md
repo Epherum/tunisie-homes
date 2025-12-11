@@ -60,6 +60,9 @@ SUPABASE_SERVICE_KEY=your_service_key
 GEMINI_API_KEY=your_gemini_api_key
 # or
 OPENAI_API_KEY=your_openai_api_key
+
+# Optional (for storage uploads)
+STORAGE_BUCKET=property-images
 ```
 
 ## Usage
@@ -79,6 +82,9 @@ python main.py --max-listings 10
 # Download images locally
 python main.py --download-images
 
+# Upload images to Supabase Storage (requires STORAGE_BUCKET)
+python main.py --upload-images
+
 # Generate embeddings with Gemini
 python main.py --generate-embeddings --embedding-provider gemini
 
@@ -95,6 +101,7 @@ python main.py --max-listings 20 --download-images --generate-embeddings
 |--------|------|---------|-------------|
 | `--max-listings` | int | 5 | Maximum number of listings to scrape |
 | `--download-images` | flag | False | Download images locally |
+| `--upload-images` | flag | False | Upload images to Supabase Storage and sync DB URLs |
 | `--generate-embeddings` | flag | False | Generate AI embeddings |
 | `--embedding-provider` | string | gemini | Provider for embeddings (gemini/openai) |
 
@@ -162,9 +169,7 @@ Key tables:
 
 ### Image Storage
 
-Currently, images are stored by URL in the database. When `--download-images` is used, images are also saved locally in `downloaded_images/` but still referenced by URL in the database.
-
-Future enhancement: Upload to Supabase Storage and update URLs.
+Images are stored by URL in the database. When `--download-images` is used, images are also saved locally in `downloaded_images/`. Use `--upload-images` to push them to Supabase Storage (bucket set by `STORAGE_BUCKET`) and replace DB URLs with public Storage links.
 
 ### Embeddings
 

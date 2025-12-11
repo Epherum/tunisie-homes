@@ -1,0 +1,158 @@
+.page {
+  min-height: 100vh;
+  padding: 48px 0 64px;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+}
+
+.panel {
+  background: #0d1322;
+  border: 1px solid #1d2742;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 36px rgba(3, 7, 18, 0.35);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 160px);
+  overflow: auto;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #1f2942;
+  background: rgba(255, 255, 255, 0.02);
+  color: #cbd8f3;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.listItem:hover {
+  border-color: #2c3a5d;
+}
+
+.listItem.active {
+  border-color: #2c3a5d;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.editor {
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  color: #9fb2d3;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #1f2942;
+  background: #0a1020;
+  color: #e9edf7;
+  font-size: 14px;
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #2c3a5d;
+  background: linear-gradient(140deg, #1e2b4a, #13203a);
+  color: #f7fbff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  border-color: #3a4c75;
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.imageChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #1f2942;
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd8f3;
+  font-size: 12px;
+}
+
+.danger {
+  color: #ffb3b3;
+  cursor: pointer;
+}
+
+.status {
+  font-size: 13px;
+  color: #9fb2d3;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

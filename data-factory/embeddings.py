@@ -154,8 +154,8 @@ class EmbeddingGenerator:
             text_parts.append(f"Région: {property_data['region']}")
 
         # Add property type if available
-        if property_data.get('type'):
-            text_parts.append(f"Type: {property_data['type']}")
+        if property_data.get('propertyType'):
+            text_parts.append(f"Type: {property_data['propertyType']}")
 
         combined_text = " ".join(text_parts)
 

@@ -58,11 +58,14 @@ class DataNormalizer:
         """
         normalized = property_data.copy()
 
+        # Clean title (remove ref prefixes, extra whitespace)
+        normalized['title'] = self._clean_title(property_data.get('title', ''))
+
         # Map to enum values (NEW)
-        normalized['propertyType'] = self._extract_property_type(property_data['title'])
+        normalized['propertyType'] = self._extract_property_type(normalized['title'])
         normalized['listingType'] = self._extract_listing_type(
             property_data.get('sourceUrl', ''),
-            property_data['title'],
+            normalized['title'],
             property_data.get('description', '')
         )
 
@@ -80,7 +83,7 @@ class DataNormalizer:
 
         # Try to extract rooms/bathrooms from description if not set
         if not normalized.get('rooms') and normalized.get('description'):
-            normalized['rooms'] = self._extract_rooms(normalized['description'], property_data['title'])
+            normalized['rooms'] = self._extract_rooms(normalized['description'], normalized['title'])
 
         if not normalized.get('bathrooms') and normalized.get('description'):
             normalized['bathrooms'] = self._extract_bathrooms(normalized['description'])
@@ -160,6 +163,13 @@ class DataNormalizer:
         text_lower = description.lower()
 
         return any(keyword in text_lower for keyword in negotiable_keywords)
+
+    def _clean_title(self, title: str) -> str:
+        """
+        Remove reference prefixes like [Réf:123456] and trim whitespace.
+        """
+        cleaned = re.sub(r'^\s*\[?\s*r[eé]f[:\s]*\d+\]?\s*', '', title, flags=re.IGNORECASE)
+        return cleaned.strip()
 
     def _clean_description(self, description: str) -> str:
         """

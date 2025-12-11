@@ -1,26 +1,18 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
-  extensions = [postgis, uuid_ossp(map: "uuid-ossp", schema: "extensions"), vector]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-enum PropertyType {
-  APARTMENT
-  HOUSE
-  VILLA
-  DUPLEX
-  STUDIO
-  PENTHOUSE
-  LAND
-  COMMERCIAL
-  OFFICE
-  FARM
+enum DataSource {
+  TUNISIE_ANNONCE
+  MUBAWAB
+  TAYARA
+  USER_UPLOAD
 }
 
 enum ListingType {
@@ -35,162 +27,139 @@ enum PropertyStatus {
   INACTIVE
 }
 
-enum DataSource {
-  TUNISIE_ANNONCE
-  USER_UPLOAD
-  TAYARA
-  MUBAWAB
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  STUDIO
+  DUPLEX
+  VILLA
+  LAND
+  PENTHOUSE
+  COMMERCIAL
+  OFFICE
+  FARM
 }
 
 model Property {
-  id          String   @id @default(dbgenerated("gen_random_uuid()"))
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  scrapedAt   DateTime @default(now())
-  analyzedAt  DateTime?
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Text
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  scrapedAt             DateTime              @default(now())
+  analyzedAt            DateTime?
+  title                 String
+  description           String?
+  listingType           ListingType
+  price                 Float
+  currency              String                @default("TND")
+  pricePerSqm           Float?
+  estimatedFairValue    Float?
+  isPriceNegotiable     Boolean               @default(false)
+  address               String?
+  city                  String?
+  region                String?
+  latitude              Float?
+  longitude             Float?
+  location              Unsupported("geometry")?
+  propertyType          PropertyType?
+  surfaceArea           Float?
+  rooms                 Int?
+  bathrooms             Int?
+  floor                 Int?
+  totalFloors           Int?
+  features              String[]             @default([])
+  source                DataSource
+  sourceUrl             String                @unique
+  sourceId              String?
+  status                PropertyStatus        @default(ACTIVE)
+  renovationScore       Float?
+  dealRating            Float?
+  aiTags                String[]             @default([])
+  aiDescription         String?
+  descriptionEmbedding  Unsupported("vector")?
+  views                 Int                   @default(0)
+  isFeatured            Boolean               @default(false)
+  contactPhone          String?
+  contactEmail          String?
+  contactName           String?
 
-  // Core Info
-  title       String
-  description String?  @db.Text
-  listingType ListingType
+  images                Image[]
+  priceHistory          PriceHistory[]
+  analyses              AIAnalysis[]
 
-  // Pricing
-  price              Float
-  currency           String  @default("TND")
-  pricePerSqm        Float?
-  estimatedFairValue Float?
-  isPriceNegotiable  Boolean @default(false)
+  @@index([city, region], map: "properties_city_region_idx")
+  @@index([createdAt], map: "properties_createdAt_idx")
+  @@index([dealRating], map: "properties_dealRating_idx")
+  @@index([latitude, longitude], map: "properties_latitude_longitude_idx")
+  @@index([listingType], map: "properties_listingType_idx")
+  @@index([price], map: "properties_price_idx")
+  @@index([propertyType], map: "properties_propertyType_idx")
+  @@index([rooms, bathrooms], map: "properties_rooms_bathrooms_idx")
+  @@index([source], map: "properties_source_idx")
+  @@index([status], map: "properties_status_idx")
 
-  // Location
-  address   String?
-  city      String?
-  region    String?
-  latitude  Float?
-  longitude Float?
-  location  Unsupported("geometry(Point, 4326)")?
-
-  // Property Details
-  propertyType PropertyType?
-  surfaceArea  Float?
-  rooms        Int?
-  bathrooms    Int?
-  floor        Int?
-  totalFloors  Int?
-
-  // Features & Amenities
-  features     String[] // ["parking", "elevator", "garden", "pool", "balcony", "furnished"]
-
-  // Source Tracking
-  source       DataSource
-  sourceUrl    String     @unique
-  sourceId     String?
-  status       PropertyStatus @default(ACTIVE)
-
-  // AI Intelligence Layer
-  renovationScore      Float?  // 0-10 scale
-  dealRating           Float?  // 0-100 (percentage - how good the deal is)
-  aiTags               String[] // ["marble_floors", "modern_kitchen", "needs_renovation"]
-  aiDescription        String?  @db.Text // AI-generated enhanced description
-  descriptionEmbedding Unsupported("vector(768)")?
-
-  // Analytics
-  views          Int      @default(0)
-  isFeatured     Boolean  @default(false)
-
-  // Contact (for user uploads)
-  contactPhone   String?
-  contactEmail   String?
-  contactName    String?
-
-  // Relations
-  images         Image[]
-  priceHistory   PriceHistory[]
-  aiAnalyses     AIAnalysis[]
-
-  // Indexes for Performance
-  @@index([price])
-  @@index([listingType])
-  @@index([propertyType])
-  @@index([status])
-  @@index([source])
-  @@index([city, region])
-  @@index([rooms, bathrooms])
-  @@index([dealRating])
-  @@index([createdAt])
-  @@index([latitude, longitude])
   @@map("properties")
 }
 
 model Image {
-  id               String   @id @default(dbgenerated("gen_random_uuid()"))
-  url              String
-  localPath        String?  // For downloaded images
-  caption          String?
-  order            Int      @default(0)
-  width            Int?
-  height           Int?
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Text
+  url             String
+  localPath       String?
+  caption         String?
+  order           Int          @default(0)
+  width           Int?
+  height          Int?
+  analyzedAt      DateTime?
+  aiTags          String[]       @default([])
+  renovationScore Float?
+  propertyId      String      @db.Text
 
-  // AI Analysis
-  analyzedAt       DateTime?
-  aiTags           String[] // ["modern", "spacious", "bright"]
-  renovationScore  Float?   // Per-image renovation assessment
+  property        Property    @relation(fields: [propertyId], references: [id])
 
-  propertyId       String
-  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@index([propertyId])
+  @@index([propertyId], map: "images_propertyId_idx")
   @@map("images")
 }
 
 model PriceHistory {
-  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Text
   price      Float
   recordedAt DateTime @default(now())
-  source     String?  // Where this price was recorded
+  source     String?
+  propertyId String   @db.Text
 
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id])
 
-  @@index([propertyId, recordedAt])
+  @@index([recordedAt, propertyId], map: "price_history_propertyId_recordedAt_idx")
   @@map("price_history")
 }
 
-model AIAnalysis {
-  id            String   @id @default(dbgenerated("gen_random_uuid()"))
-  createdAt     DateTime @default(now())
+model NeighborhoodStats {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Text
+  updatedAt      DateTime @default(now())
+  city           String
+  region         String?
+  avgPricePerSqm Float
+  medianPrice    Float
+  totalListings  Int
+  activeListings Int
+  avgRentPrice   Float?
+  avgSalePrice   Float?
 
-  // Analysis Details
-  modelUsed     String   // "ollama-llama3.2-vision" or "gemini-1.5-flash"
-  analysisType  String   // "renovation_score", "price_prediction", "description_generation"
-  result        Json     // Flexible JSON to store any analysis results
-  confidence    Float?   // 0-1 confidence score
-
-  propertyId    String
-  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@index([propertyId])
-  @@index([analysisType])
-  @@map("ai_analyses")
+  @@unique([city, region], map: "neighborhood_stats_city_region_key")
+  @@map("neighborhood_stats")
 }
 
-model NeighborhoodStats {
-  id              String   @id @default(dbgenerated("gen_random_uuid()"))
-  updatedAt       DateTime @updatedAt
+model AIAnalysis {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Text
+  createdAt    DateTime  @default(now())
+  modelUsed    String
+  analysisType String
+  result       Json
+  confidence   Float?
+  propertyId   String    @db.Text
 
-  // Location
-  city            String
-  region          String?
+  property     Property  @relation(fields: [propertyId], references: [id])
 
-  // Market Statistics
-  avgPricePerSqm  Float
-  medianPrice     Float
-  totalListings   Int
-  activeListings  Int
-
-  // Breakdown by type
-  avgRentPrice    Float?
-  avgSalePrice    Float?
-
-  @@unique([city, region])
-  @@map("neighborhood_stats")
+  @@index([analysisType], map: "ai_analyses_analysisType_idx")
+  @@index([propertyId], map: "ai_analyses_propertyId_idx")
+  @@map("ai_analyses")
 }

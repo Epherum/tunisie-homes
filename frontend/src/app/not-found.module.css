@@ -1,0 +1,42 @@
+.page {
+  min-height: 100vh;
+  padding: 48px 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shell {
+  width: min(680px, calc(100% - 32px));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert {
+  background: rgba(255, 191, 71, 0.08);
+  border: 1px solid rgba(255, 191, 71, 0.35);
+  color: #ffdc9b;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.backLink {
+  color: #cbd8f3;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #1f2942;
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+  align-self: flex-start;
+}
+
+.backLink:hover {
+  border-color: #2c3a5d;
+  transform: translateY(-2px);
+}
