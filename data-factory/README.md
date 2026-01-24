@@ -218,3 +218,14 @@ The pipeline shows database stats after completion:
 - [ ] Scheduled runs (cron/celery)
 - [ ] Duplicate detection
 - [ ] Change tracking
+
+## Backup & Restore (resetting your PC)
+Back up before wiping:
+- `data-factory/.env`
+- Local artifacts you want to keep: `downloaded_images/` and `scraped_data.json`
+
+Supabase data lives in the cloud, so your listings persist there.
+
+Restore steps:
+1. Recreate `data-factory/.env`.
+2. `pip install -r requirements.txt` and run the CLI as needed.

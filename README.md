@@ -16,6 +16,7 @@ npm install
 # Configure env vars
 export NEXT_PUBLIC_SUPABASE_URL=...
 export NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+export ADMIN_PASS=...
 npm run dev
 ```
 Open http://localhost:3000 to view the listing grid. Data comes straight from your Supabase `properties` and `images` tables.
@@ -31,7 +32,43 @@ python main.py --max-listings 10 --download-images --generate-embeddings
 ```
 Flags let you control scrape volume, image downloading/uploading, and embedding provider (Gemini or OpenAI). See `data-factory/README.md` for CLI options and architecture.
 
+## Environment variables
+### Frontend (`frontend/`)
+Required:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `ADMIN_PASS` (required for `/admin` routes)
+
+Optional:
+- `ADMIN_USER` (defaults to `admin`)
+- `DATABASE_URL` / `DIRECT_URL` (only if you run Prisma locally against the DB)
+
+Create `frontend/.env.local` or export variables in your shell.
+
+### Data factory (`data-factory/`)
+Required:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_KEY`
+
+Optional:
+- `STORAGE_BUCKET` (for `--upload-images`)
+- `GEMINI_API_KEY` or `OPENAI_API_KEY` (for embeddings)
+
+Create `data-factory/.env` or export variables in your shell.
+
 ## Additional docs
 - Browse `docs/` for schema upgrade notes, API analysis, Mapbox setup, and requirements.
 - Prisma schema lives in `frontend/prisma/schema.prisma`.
 - Storage and upload plans are documented in `data-factory/STORAGE_UPLOAD_PLAN.md`.
+
+## Backup & Restore (resetting your PC)
+Back up before wiping:
+- `frontend/.env.local` and `data-factory/.env`
+- Any local artifacts you care about: `scraped_data.json` and `data-factory/downloaded_images/`
+
+Supabase data lives in the cloud, so your listings/images persist there.
+
+Restore steps:
+1. Recreate the `.env` files from your Supabase project settings.
+2. `cd frontend && npm install && npm run dev`
+3. `cd data-factory && pip install -r requirements.txt` then run the CLI as needed.
